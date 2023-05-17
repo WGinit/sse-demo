@@ -1,0 +1,76 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>EventSource Example</title>
+  </head>
+  <body>
+    <h1>Server Sent Events Example</h1>
+    <div id="result"></div>
+    <script>
+        // 与服务端保持长链接，替代轮询
+        function throttle(fn, wait = 1500, isImmediately = false) {
+            let prev = new Date();
+            let immediately = isImmediately
+            return function() {
+                const args = arguments;
+                const now = new Date();
+                if (now - prev > wait || immediately) {
+                    fn.apply(this, args);
+                    prev = new Date();
+                    immediately = false
+                }
+            };
+        };
+
+        const delayTime = 5000 // 间隔处理时间，默认5s，5s内的所有推送以取最后一次结果
+
+        class AppEventSource {
+            sse = null;
+            error = null;
+
+            constructor(options) {
+                console.log('options===', options)
+                const { url, type, cb } = options;
+                this.sse = new EventSource(url);
+                this.sse.addEventListener(
+                    'open',
+                    function(event) {
+                        console.log('连接已打开', event);
+                    },
+                    false
+                );
+                this.sse.addEventListener(type, (e) => {
+                    this.sendMessage(cb, e.data);
+                }, false);
+                this.sse.addEventListener(
+                    'error',
+                    (event) => {
+                        console.error('连接错误', event);
+                        this.error = event;
+                        this.sse.close();
+                    },
+                    false
+                );
+            }
+            sendMessage = throttle((cb, data) => {
+                typeof cb === 'function' && cb(data)
+            }, delayTime, true)
+        }
+
+        function callback(e) {
+            console.log('收到结果---e', e)
+            const result = document.querySelector('#result');
+            result.innerHTML += `<p>${e}</p>`;
+        }
+
+        const app = new AppEventSource({
+            url: '/sse',
+            type: 'test',
+            cb: callback
+        })
+
+    </script>
+  </body>
+</html>

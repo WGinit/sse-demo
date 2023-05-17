@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>EventSource Example</title>
+  </head>
+  <body>
+    <h1>Server Sent Events Example</h1>
+    <div id="result"></div>
+
+    <script>
+      // 创建 EventSource 实例
+      const eventSource = new EventSource('/sse');
+
+      eventSource.onopen = function (event) { // 与服务器连接成功回调
+        console.log('成功与服务器连接')
+      }
+
+      eventSource.onmessage = function (event) { // 监听未命名事件
+        console.log('未命名事件', event.data)
+        }
+
+      eventSource.onerror = function (error) { // 监听错误
+        console.log('错误', error)
+      }
+
+      // 监听 message 事件
+      eventSource.addEventListener('test', (event) => {
+        const data = event.data;
+        // 将新消息添加到页面中
+        const result = document.querySelector('#result');
+        result.innerHTML += `<p>${data}</p>`;
+      });
+
+      // 监听 error 事件
+      eventSource.addEventListener('error', (event) => {
+        console.error('EventSource error: ', event);
+        eventSource.close();
+      });
+    </script>
+  </body>
+</html>
